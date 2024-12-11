@@ -1,0 +1,1483 @@
+{
+  "D:\\project\\automation-workflow": {
+    "versionSfCore": null,
+    "versionFramework": "4.4.15",
+    "isWithinCompose": false,
+    "isCompose": false,
+    "composeOrgName": null,
+    "composeResolverProviders": {
+      "default-aws-credential-resolver": "<REDACTED>",
+      "sls": {
+        "instance": {
+          "credentials": "<REDACTED>",
+          "serviceConfigFile": {
+            "service": "automation-workflow",
+            "provider": {
+              "name": "aws",
+              "runtime": "nodejs18.x",
+              "region": "eu-west-1",
+              "iam": {
+                "role": {
+                  "statements": [
+                    {
+                      "Effect": "Allow",
+                      "Action": [
+                        "sqs:SendMessage"
+                      ],
+                      "Resource": [
+                        "arn:aws:sqs:eu-west-1:034362054340:automation-workflow-dev-QueueManagerQueue-*",
+                        "arn:aws:sqs:eu-west-1:034362054340:automation-workflow-dev-OCRQueue-*",
+                        "arn:aws:sqs:eu-west-1:034362054340:automation-workflow-dev-OpenAIQueue-*"
+                      ]
+                    }
+                  ]
+                }
+              },
+              "stage": "dev",
+              "versionFunctions": true,
+              "compiledCloudFormationTemplate": {
+                "AWSTemplateFormatVersion": "2010-09-09",
+                "Description": "The AWS CloudFormation template for this Serverless application",
+                "Resources": {
+                  "QueueManagerLogGroup": {
+                    "Type": "AWS::Logs::LogGroup",
+                    "Properties": {
+                      "LogGroupName": "/aws/lambda/automation-workflow-dev-queueManager"
+                    }
+                  },
+                  "GmailTriggerLogGroup": {
+                    "Type": "AWS::Logs::LogGroup",
+                    "Properties": {
+                      "LogGroupName": "/aws/lambda/automation-workflow-dev-gmailTrigger"
+                    }
+                  },
+                  "OcrNodeLogGroup": {
+                    "Type": "AWS::Logs::LogGroup",
+                    "Properties": {
+                      "LogGroupName": "/aws/lambda/automation-workflow-dev-ocrNode"
+                    }
+                  },
+                  "OpenaiNodeLogGroup": {
+                    "Type": "AWS::Logs::LogGroup",
+                    "Properties": {
+                      "LogGroupName": "/aws/lambda/automation-workflow-dev-openaiNode"
+                    }
+                  },
+                  "IamRoleLambdaExecution": {
+                    "Type": "AWS::IAM::Role",
+                    "Properties": {
+                      "AssumeRolePolicyDocument": {
+                        "Version": "2012-10-17",
+                        "Statement": [
+                          {
+                            "Effect": "Allow",
+                            "Principal": {
+                              "Service": [
+                                "lambda.amazonaws.com"
+                              ]
+                            },
+                            "Action": [
+                              "sts:AssumeRole"
+                            ]
+                          }
+                        ]
+                      },
+                      "Policies": [
+                        {
+                          "PolicyName": {
+                            "Fn::Join": [
+                              "-",
+                              [
+                                "automation-workflow",
+                                "dev",
+                                "lambda"
+                              ]
+                            ]
+                          },
+                          "PolicyDocument": {
+                            "Version": "2012-10-17",
+                            "Statement": [
+                              {
+                                "Effect": "Allow",
+                                "Action": [
+                                  "logs:CreateLogStream",
+                                  "logs:CreateLogGroup",
+                                  "logs:TagResource"
+                                ],
+                                "Resource": [
+                                  {
+                                    "Fn::Sub": "arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/automation-workflow-dev*:*"
+                                  }
+                                ]
+                              },
+                              {
+                                "Effect": "Allow",
+                                "Action": [
+                                  "logs:PutLogEvents"
+                                ],
+                                "Resource": [
+                                  {
+                                    "Fn::Sub": "arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/automation-workflow-dev*:*:*"
+                                  }
+                                ]
+                              },
+                              {
+                                "Effect": "Allow",
+                                "Action": [
+                                  "sqs:SendMessage"
+                                ],
+                                "Resource": [
+                                  "arn:aws:sqs:eu-west-1:034362054340:automation-workflow-dev-QueueManagerQueue-*",
+                                  "arn:aws:sqs:eu-west-1:034362054340:automation-workflow-dev-OCRQueue-*",
+                                  "arn:aws:sqs:eu-west-1:034362054340:automation-workflow-dev-OpenAIQueue-*"
+                                ]
+                              },
+                              {
+                                "Effect": "Allow",
+                                "Action": [
+                                  "sqs:ReceiveMessage",
+                                  "sqs:DeleteMessage",
+                                  "sqs:GetQueueAttributes"
+                                ],
+                                "Resource": [
+                                  {
+                                    "Fn::GetAtt": [
+                                      "QueueManagerQueue",
+                                      "Arn"
+                                    ]
+                                  },
+                                  {
+                                    "Fn::GetAtt": [
+                                      "OCRQueue",
+                                      "Arn"
+                                    ]
+                                  },
+                                  {
+                                    "Fn::GetAtt": [
+                                      "OpenAIQueue",
+                                      "Arn"
+                                    ]
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        }
+                      ],
+                      "Path": "/",
+                      "RoleName": {
+                        "Fn::Join": [
+                          "-",
+                          [
+                            "automation-workflow",
+                            "dev",
+                            {
+                              "Ref": "AWS::Region"
+                            },
+                            "lambdaRole"
+                          ]
+                        ]
+                      }
+                    }
+                  },
+                  "QueueManagerLambdaFunction": {
+                    "Type": "AWS::Lambda::Function",
+                    "Properties": {
+                      "Code": {
+                        "S3Bucket": "serverless-framework-deployments-eu-west-1-4c9e3b88-5606",
+                        "S3Key": "serverless/automation-workflow/dev/1733912118981-2024-12-11T10:15:18.981Z/automation-workflow.zip"
+                      },
+                      "Handler": "src/queue-manager.handler",
+                      "Runtime": "nodejs18.x",
+                      "FunctionName": "automation-workflow-dev-queueManager",
+                      "MemorySize": 1024,
+                      "Timeout": 6,
+                      "Role": {
+                        "Fn::GetAtt": [
+                          "IamRoleLambdaExecution",
+                          "Arn"
+                        ]
+                      }
+                    },
+                    "DependsOn": [
+                      "QueueManagerLogGroup"
+                    ]
+                  },
+                  "GmailTriggerLambdaFunction": {
+                    "Type": "AWS::Lambda::Function",
+                    "Properties": {
+                      "Code": {
+                        "S3Bucket": "serverless-framework-deployments-eu-west-1-4c9e3b88-5606",
+                        "S3Key": "serverless/automation-workflow/dev/1733912118981-2024-12-11T10:15:18.981Z/automation-workflow.zip"
+                      },
+                      "Handler": "src/gmail-trigger.handler",
+                      "Runtime": "nodejs18.x",
+                      "FunctionName": "automation-workflow-dev-gmailTrigger",
+                      "MemorySize": 1024,
+                      "Timeout": 6,
+                      "Role": {
+                        "Fn::GetAtt": [
+                          "IamRoleLambdaExecution",
+                          "Arn"
+                        ]
+                      }
+                    },
+                    "DependsOn": [
+                      "GmailTriggerLogGroup"
+                    ]
+                  },
+                  "OcrNodeLambdaFunction": {
+                    "Type": "AWS::Lambda::Function",
+                    "Properties": {
+                      "Code": {
+                        "S3Bucket": "serverless-framework-deployments-eu-west-1-4c9e3b88-5606",
+                        "S3Key": "serverless/automation-workflow/dev/1733912118981-2024-12-11T10:15:18.981Z/automation-workflow.zip"
+                      },
+                      "Handler": "src/ocr-node.handler",
+                      "Runtime": "nodejs18.x",
+                      "FunctionName": "automation-workflow-dev-ocrNode",
+                      "MemorySize": 1024,
+                      "Timeout": 6,
+                      "Role": {
+                        "Fn::GetAtt": [
+                          "IamRoleLambdaExecution",
+                          "Arn"
+                        ]
+                      }
+                    },
+                    "DependsOn": [
+                      "OcrNodeLogGroup"
+                    ]
+                  },
+                  "OpenaiNodeLambdaFunction": {
+                    "Type": "AWS::Lambda::Function",
+                    "Properties": {
+                      "Code": {
+                        "S3Bucket": "serverless-framework-deployments-eu-west-1-4c9e3b88-5606",
+                        "S3Key": "serverless/automation-workflow/dev/1733912118981-2024-12-11T10:15:18.981Z/automation-workflow.zip"
+                      },
+                      "Handler": "src/openai-node.handler",
+                      "Runtime": "nodejs18.x",
+                      "FunctionName": "automation-workflow-dev-openaiNode",
+                      "MemorySize": 1024,
+                      "Timeout": 6,
+                      "Role": {
+                        "Fn::GetAtt": [
+                          "IamRoleLambdaExecution",
+                          "Arn"
+                        ]
+                      }
+                    },
+                    "DependsOn": [
+                      "OpenaiNodeLogGroup"
+                    ]
+                  },
+                  "QueueManagerLambdaVersionzrFjjZ1OSUadYRvV2y90XLboe7JR4rb4yxtwis3C48A": {
+                    "Type": "AWS::Lambda::Version",
+                    "DeletionPolicy": "Retain",
+                    "Properties": {
+                      "FunctionName": {
+                        "Ref": "QueueManagerLambdaFunction"
+                      },
+                      "CodeSha256": "JvMzAC5j9l7u6L4itiUUrowoZ6cyxLFb5znoUAqrT98="
+                    }
+                  },
+                  "GmailTriggerLambdaVersionS7a73STmaVdSN7e1IaIdE474TXEV1d5imgyKk0ehU": {
+                    "Type": "AWS::Lambda::Version",
+                    "DeletionPolicy": "Retain",
+                    "Properties": {
+                      "FunctionName": {
+                        "Ref": "GmailTriggerLambdaFunction"
+                      },
+                      "CodeSha256": "JvMzAC5j9l7u6L4itiUUrowoZ6cyxLFb5znoUAqrT98="
+                    }
+                  },
+                  "OcrNodeLambdaVersionHVx05olk2jv8iHLXQwM8ApQVv99FKouPQwQLejvqQ": {
+                    "Type": "AWS::Lambda::Version",
+                    "DeletionPolicy": "Retain",
+                    "Properties": {
+                      "FunctionName": {
+                        "Ref": "OcrNodeLambdaFunction"
+                      },
+                      "CodeSha256": "JvMzAC5j9l7u6L4itiUUrowoZ6cyxLFb5znoUAqrT98="
+                    }
+                  },
+                  "OpenaiNodeLambdaVersion9EUbuz6LzYVPPC0kmzO4AUONcikCGWhlal6SYLgg": {
+                    "Type": "AWS::Lambda::Version",
+                    "DeletionPolicy": "Retain",
+                    "Properties": {
+                      "FunctionName": {
+                        "Ref": "OpenaiNodeLambdaFunction"
+                      },
+                      "CodeSha256": "JvMzAC5j9l7u6L4itiUUrowoZ6cyxLFb5znoUAqrT98="
+                    }
+                  },
+                  "ApiGatewayRestApi": {
+                    "Type": "AWS::ApiGateway::RestApi",
+                    "Properties": {
+                      "Name": "dev-automation-workflow",
+                      "EndpointConfiguration": {
+                        "Types": [
+                          "EDGE"
+                        ]
+                      },
+                      "Policy": ""
+                    }
+                  },
+                  "ApiGatewayResourceWorkflows": {
+                    "Type": "AWS::ApiGateway::Resource",
+                    "Properties": {
+                      "ParentId": {
+                        "Fn::GetAtt": [
+                          "ApiGatewayRestApi",
+                          "RootResourceId"
+                        ]
+                      },
+                      "PathPart": "workflows",
+                      "RestApiId": {
+                        "Ref": "ApiGatewayRestApi"
+                      }
+                    }
+                  },
+                  "ApiGatewayResourceWorkflowsTrigger": {
+                    "Type": "AWS::ApiGateway::Resource",
+                    "Properties": {
+                      "ParentId": {
+                        "Ref": "ApiGatewayResourceWorkflows"
+                      },
+                      "PathPart": "trigger",
+                      "RestApiId": {
+                        "Ref": "ApiGatewayRestApi"
+                      }
+                    }
+                  },
+                  "ApiGatewayMethodWorkflowsTriggerPost": {
+                    "Type": "AWS::ApiGateway::Method",
+                    "Properties": {
+                      "HttpMethod": "POST",
+                      "RequestParameters": {},
+                      "ResourceId": {
+                        "Ref": "ApiGatewayResourceWorkflowsTrigger"
+                      },
+                      "RestApiId": {
+                        "Ref": "ApiGatewayRestApi"
+                      },
+                      "ApiKeyRequired": "<REDACTED>",
+                      "AuthorizationType": "NONE",
+                      "Integration": {
+                        "IntegrationHttpMethod": "POST",
+                        "Type": "AWS_PROXY",
+                        "Uri": {
+                          "Fn::Join": [
+                            "",
+                            [
+                              "arn:",
+                              {
+                                "Ref": "AWS::Partition"
+                              },
+                              ":apigateway:",
+                              {
+                                "Ref": "AWS::Region"
+                              },
+                              ":lambda:path/2015-03-31/functions/",
+                              {
+                                "Fn::GetAtt": [
+                                  "GmailTriggerLambdaFunction",
+                                  "Arn"
+                                ]
+                              },
+                              "/invocations"
+                            ]
+                          ]
+                        }
+                      },
+                      "MethodResponses": []
+                    },
+                    "DependsOn": [
+                      "GmailTriggerLambdaPermissionApiGateway"
+                    ]
+                  },
+                  "ApiGatewayDeployment1733912101226": {
+                    "Type": "AWS::ApiGateway::Deployment",
+                    "Properties": {
+                      "RestApiId": {
+                        "Ref": "ApiGatewayRestApi"
+                      },
+                      "StageName": "dev"
+                    },
+                    "DependsOn": [
+                      "ApiGatewayMethodWorkflowsTriggerPost"
+                    ]
+                  },
+                  "GmailTriggerLambdaPermissionApiGateway": {
+                    "Type": "AWS::Lambda::Permission",
+                    "Properties": {
+                      "FunctionName": {
+                        "Fn::GetAtt": [
+                          "GmailTriggerLambdaFunction",
+                          "Arn"
+                        ]
+                      },
+                      "Action": "lambda:InvokeFunction",
+                      "Principal": "apigateway.amazonaws.com",
+                      "SourceArn": {
+                        "Fn::Join": [
+                          "",
+                          [
+                            "arn:",
+                            {
+                              "Ref": "AWS::Partition"
+                            },
+                            ":execute-api:",
+                            {
+                              "Ref": "AWS::Region"
+                            },
+                            ":",
+                            {
+                              "Ref": "AWS::AccountId"
+                            },
+                            ":",
+                            {
+                              "Ref": "ApiGatewayRestApi"
+                            },
+                            "/*/*"
+                          ]
+                        ]
+                      }
+                    }
+                  },
+                  "QueueManagerEventSourceMappingSQSQueueManagerQueue": {
+                    "Type": "AWS::Lambda::EventSourceMapping",
+                    "DependsOn": [
+                      "IamRoleLambdaExecution"
+                    ],
+                    "Properties": {
+                      "BatchSize": 10,
+                      "EventSourceArn": {
+                        "Fn::GetAtt": [
+                          "QueueManagerQueue",
+                          "Arn"
+                        ]
+                      },
+                      "FunctionName": {
+                        "Fn::GetAtt": [
+                          "QueueManagerLambdaFunction",
+                          "Arn"
+                        ]
+                      },
+                      "Enabled": true
+                    }
+                  },
+                  "OcrNodeEventSourceMappingSQSOCRQueue": {
+                    "Type": "AWS::Lambda::EventSourceMapping",
+                    "DependsOn": [
+                      "IamRoleLambdaExecution"
+                    ],
+                    "Properties": {
+                      "BatchSize": 10,
+                      "EventSourceArn": {
+                        "Fn::GetAtt": [
+                          "OCRQueue",
+                          "Arn"
+                        ]
+                      },
+                      "FunctionName": {
+                        "Fn::GetAtt": [
+                          "OcrNodeLambdaFunction",
+                          "Arn"
+                        ]
+                      },
+                      "Enabled": true
+                    }
+                  },
+                  "OpenaiNodeEventSourceMappingSQSOpenAIQueue": {
+                    "Type": "AWS::Lambda::EventSourceMapping",
+                    "DependsOn": [
+                      "IamRoleLambdaExecution"
+                    ],
+                    "Properties": {
+                      "BatchSize": 10,
+                      "EventSourceArn": {
+                        "Fn::GetAtt": [
+                          "OpenAIQueue",
+                          "Arn"
+                        ]
+                      },
+                      "FunctionName": {
+                        "Fn::GetAtt": [
+                          "OpenaiNodeLambdaFunction",
+                          "Arn"
+                        ]
+                      },
+                      "Enabled": true
+                    }
+                  },
+                  "QueueManagerQueue": {
+                    "Type": "AWS::SQS::Queue"
+                  },
+                  "OCRQueue": {
+                    "Type": "AWS::SQS::Queue"
+                  },
+                  "OpenAIQueue": {
+                    "Type": "AWS::SQS::Queue"
+                  }
+                },
+                "Outputs": {
+                  "ServerlessDeploymentBucketName": {
+                    "Value": "serverless-framework-deployments-eu-west-1-4c9e3b88-5606",
+                    "Export": {
+                      "Name": "sls-automation-workflow-dev-ServerlessDeploymentBucketName"
+                    }
+                  },
+                  "QueueManagerLambdaFunctionQualifiedArn": {
+                    "Description": "Current Lambda function version",
+                    "Value": {
+                      "Ref": "QueueManagerLambdaVersionzrFjjZ1OSUadYRvV2y90XLboe7JR4rb4yxtwis3C48A"
+                    },
+                    "Export": {
+                      "Name": "sls-automation-workflow-dev-QueueManagerLambdaFunctionQualifiedArn"
+                    }
+                  },
+                  "GmailTriggerLambdaFunctionQualifiedArn": {
+                    "Description": "Current Lambda function version",
+                    "Value": {
+                      "Ref": "GmailTriggerLambdaVersionS7a73STmaVdSN7e1IaIdE474TXEV1d5imgyKk0ehU"
+                    },
+                    "Export": {
+                      "Name": "sls-automation-workflow-dev-GmailTriggerLambdaFunctionQualifiedArn"
+                    }
+                  },
+                  "OcrNodeLambdaFunctionQualifiedArn": {
+                    "Description": "Current Lambda function version",
+                    "Value": {
+                      "Ref": "OcrNodeLambdaVersionHVx05olk2jv8iHLXQwM8ApQVv99FKouPQwQLejvqQ"
+                    },
+                    "Export": {
+                      "Name": "sls-automation-workflow-dev-OcrNodeLambdaFunctionQualifiedArn"
+                    }
+                  },
+                  "OpenaiNodeLambdaFunctionQualifiedArn": {
+                    "Description": "Current Lambda function version",
+                    "Value": {
+                      "Ref": "OpenaiNodeLambdaVersion9EUbuz6LzYVPPC0kmzO4AUONcikCGWhlal6SYLgg"
+                    },
+                    "Export": {
+                      "Name": "sls-automation-workflow-dev-OpenaiNodeLambdaFunctionQualifiedArn"
+                    }
+                  },
+                  "ServiceEndpoint": {
+                    "Description": "URL of the service endpoint",
+                    "Value": {
+                      "Fn::Join": [
+                        "",
+                        [
+                          "https://",
+                          {
+                            "Ref": "ApiGatewayRestApi"
+                          },
+                          ".execute-api.",
+                          {
+                            "Ref": "AWS::Region"
+                          },
+                          ".",
+                          {
+                            "Ref": "AWS::URLSuffix"
+                          },
+                          "/dev"
+                        ]
+                      ]
+                    },
+                    "Export": {
+                      "Name": "sls-automation-workflow-dev-ServiceEndpoint"
+                    }
+                  }
+                }
+              },
+              "vpc": {}
+            },
+            "functions": {
+              "queueManager": {
+                "handler": "src/queue-manager.handler",
+                "events": [
+                  {
+                    "sqs": {
+                      "arn": {
+                        "Fn::GetAtt": [
+                          "QueueManagerQueue",
+                          "Arn"
+                        ]
+                      }
+                    }
+                  }
+                ],
+                "name": "automation-workflow-dev-queueManager",
+                "package": {},
+                "memory": 1024,
+                "timeout": 6,
+                "runtime": "nodejs18.x",
+                "vpc": {},
+                "versionLogicalId": "QueueManagerLambdaVersionzrFjjZ1OSUadYRvV2y90XLboe7JR4rb4yxtwis3C48A"
+              },
+              "gmailTrigger": {
+                "handler": "src/gmail-trigger.handler",
+                "events": [
+                  {
+                    "http": {
+                      "path": "workflows/trigger",
+                      "method": "post",
+                      "integration": "AWS_PROXY"
+                    }
+                  }
+                ],
+                "name": "automation-workflow-dev-gmailTrigger",
+                "package": {},
+                "memory": 1024,
+                "timeout": 6,
+                "runtime": "nodejs18.x",
+                "vpc": {},
+                "versionLogicalId": "GmailTriggerLambdaVersionS7a73STmaVdSN7e1IaIdE474TXEV1d5imgyKk0ehU"
+              },
+              "ocrNode": {
+                "handler": "src/ocr-node.handler",
+                "events": [
+                  {
+                    "sqs": {
+                      "arn": {
+                        "Fn::GetAtt": [
+                          "OCRQueue",
+                          "Arn"
+                        ]
+                      }
+                    }
+                  }
+                ],
+                "name": "automation-workflow-dev-ocrNode",
+                "package": {},
+                "memory": 1024,
+                "timeout": 6,
+                "runtime": "nodejs18.x",
+                "vpc": {},
+                "versionLogicalId": "OcrNodeLambdaVersionHVx05olk2jv8iHLXQwM8ApQVv99FKouPQwQLejvqQ"
+              },
+              "openaiNode": {
+                "handler": "src/openai-node.handler",
+                "events": [
+                  {
+                    "sqs": {
+                      "arn": {
+                        "Fn::GetAtt": [
+                          "OpenAIQueue",
+                          "Arn"
+                        ]
+                      }
+                    }
+                  }
+                ],
+                "name": "automation-workflow-dev-openaiNode",
+                "package": {},
+                "memory": 1024,
+                "timeout": 6,
+                "runtime": "nodejs18.x",
+                "vpc": {},
+                "versionLogicalId": "OpenaiNodeLambdaVersion9EUbuz6LzYVPPC0kmzO4AUONcikCGWhlal6SYLgg"
+              }
+            },
+            "resources": {
+              "Resources": {
+                "QueueManagerQueue": {
+                  "Type": "AWS::SQS::Queue"
+                },
+                "OCRQueue": {
+                  "Type": "AWS::SQS::Queue"
+                },
+                "OpenAIQueue": {
+                  "Type": "AWS::SQS::Queue"
+                }
+              },
+              "Outputs": {}
+            }
+          },
+          "configFileDirPath": "D:\\project\\automation-workflow",
+          "config": {
+            "type": "sls"
+          },
+          "options": {},
+          "stage": "dev",
+          "dashboard": null,
+          "logger": {
+            "namespace": "s:core:resolver:sls",
+            "prefix": null,
+            "prefixColor": null
+          },
+          "_credentialsPromise": "<REDACTED>"
+        },
+        "resolvers": {}
+      }
+    },
+    "composeServiceName": null,
+    "servicePath": "D:\\project\\automation-workflow",
+    "serviceConfigFileName": "serverless.yml",
+    "service": {
+      "service": "automation-workflow",
+      "provider": {
+        "name": "aws",
+        "runtime": "nodejs18.x",
+        "region": "eu-west-1",
+        "iam": {
+          "role": {
+            "statements": [
+              {
+                "Effect": "Allow",
+                "Action": [
+                  "sqs:SendMessage"
+                ],
+                "Resource": [
+                  "arn:aws:sqs:eu-west-1:034362054340:automation-workflow-dev-QueueManagerQueue-*",
+                  "arn:aws:sqs:eu-west-1:034362054340:automation-workflow-dev-OCRQueue-*",
+                  "arn:aws:sqs:eu-west-1:034362054340:automation-workflow-dev-OpenAIQueue-*"
+                ]
+              }
+            ]
+          }
+        },
+        "stage": "dev",
+        "versionFunctions": true,
+        "compiledCloudFormationTemplate": {
+          "AWSTemplateFormatVersion": "2010-09-09",
+          "Description": "The AWS CloudFormation template for this Serverless application",
+          "Resources": {
+            "QueueManagerLogGroup": {
+              "Type": "AWS::Logs::LogGroup",
+              "Properties": {
+                "LogGroupName": "/aws/lambda/automation-workflow-dev-queueManager"
+              }
+            },
+            "GmailTriggerLogGroup": {
+              "Type": "AWS::Logs::LogGroup",
+              "Properties": {
+                "LogGroupName": "/aws/lambda/automation-workflow-dev-gmailTrigger"
+              }
+            },
+            "OcrNodeLogGroup": {
+              "Type": "AWS::Logs::LogGroup",
+              "Properties": {
+                "LogGroupName": "/aws/lambda/automation-workflow-dev-ocrNode"
+              }
+            },
+            "OpenaiNodeLogGroup": {
+              "Type": "AWS::Logs::LogGroup",
+              "Properties": {
+                "LogGroupName": "/aws/lambda/automation-workflow-dev-openaiNode"
+              }
+            },
+            "IamRoleLambdaExecution": {
+              "Type": "AWS::IAM::Role",
+              "Properties": {
+                "AssumeRolePolicyDocument": {
+                  "Version": "2012-10-17",
+                  "Statement": [
+                    {
+                      "Effect": "Allow",
+                      "Principal": {
+                        "Service": [
+                          "lambda.amazonaws.com"
+                        ]
+                      },
+                      "Action": [
+                        "sts:AssumeRole"
+                      ]
+                    }
+                  ]
+                },
+                "Policies": [
+                  {
+                    "PolicyName": {
+                      "Fn::Join": [
+                        "-",
+                        [
+                          "automation-workflow",
+                          "dev",
+                          "lambda"
+                        ]
+                      ]
+                    },
+                    "PolicyDocument": {
+                      "Version": "2012-10-17",
+                      "Statement": [
+                        {
+                          "Effect": "Allow",
+                          "Action": [
+                            "logs:CreateLogStream",
+                            "logs:CreateLogGroup",
+                            "logs:TagResource"
+                          ],
+                          "Resource": [
+                            {
+                              "Fn::Sub": "arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/automation-workflow-dev*:*"
+                            }
+                          ]
+                        },
+                        {
+                          "Effect": "Allow",
+                          "Action": [
+                            "logs:PutLogEvents"
+                          ],
+                          "Resource": [
+                            {
+                              "Fn::Sub": "arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/automation-workflow-dev*:*:*"
+                            }
+                          ]
+                        },
+                        {
+                          "Effect": "Allow",
+                          "Action": [
+                            "sqs:SendMessage"
+                          ],
+                          "Resource": [
+                            "arn:aws:sqs:eu-west-1:034362054340:automation-workflow-dev-QueueManagerQueue-*",
+                            "arn:aws:sqs:eu-west-1:034362054340:automation-workflow-dev-OCRQueue-*",
+                            "arn:aws:sqs:eu-west-1:034362054340:automation-workflow-dev-OpenAIQueue-*"
+                          ]
+                        },
+                        {
+                          "Effect": "Allow",
+                          "Action": [
+                            "sqs:ReceiveMessage",
+                            "sqs:DeleteMessage",
+                            "sqs:GetQueueAttributes"
+                          ],
+                          "Resource": [
+                            {
+                              "Fn::GetAtt": [
+                                "QueueManagerQueue",
+                                "Arn"
+                              ]
+                            },
+                            {
+                              "Fn::GetAtt": [
+                                "OCRQueue",
+                                "Arn"
+                              ]
+                            },
+                            {
+                              "Fn::GetAtt": [
+                                "OpenAIQueue",
+                                "Arn"
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  }
+                ],
+                "Path": "/",
+                "RoleName": {
+                  "Fn::Join": [
+                    "-",
+                    [
+                      "automation-workflow",
+                      "dev",
+                      {
+                        "Ref": "AWS::Region"
+                      },
+                      "lambdaRole"
+                    ]
+                  ]
+                }
+              }
+            },
+            "QueueManagerLambdaFunction": {
+              "Type": "AWS::Lambda::Function",
+              "Properties": {
+                "Code": {
+                  "S3Bucket": "serverless-framework-deployments-eu-west-1-4c9e3b88-5606",
+                  "S3Key": "serverless/automation-workflow/dev/1733912118981-2024-12-11T10:15:18.981Z/automation-workflow.zip"
+                },
+                "Handler": "src/queue-manager.handler",
+                "Runtime": "nodejs18.x",
+                "FunctionName": "automation-workflow-dev-queueManager",
+                "MemorySize": 1024,
+                "Timeout": 6,
+                "Role": {
+                  "Fn::GetAtt": [
+                    "IamRoleLambdaExecution",
+                    "Arn"
+                  ]
+                }
+              },
+              "DependsOn": [
+                "QueueManagerLogGroup"
+              ]
+            },
+            "GmailTriggerLambdaFunction": {
+              "Type": "AWS::Lambda::Function",
+              "Properties": {
+                "Code": {
+                  "S3Bucket": "serverless-framework-deployments-eu-west-1-4c9e3b88-5606",
+                  "S3Key": "serverless/automation-workflow/dev/1733912118981-2024-12-11T10:15:18.981Z/automation-workflow.zip"
+                },
+                "Handler": "src/gmail-trigger.handler",
+                "Runtime": "nodejs18.x",
+                "FunctionName": "automation-workflow-dev-gmailTrigger",
+                "MemorySize": 1024,
+                "Timeout": 6,
+                "Role": {
+                  "Fn::GetAtt": [
+                    "IamRoleLambdaExecution",
+                    "Arn"
+                  ]
+                }
+              },
+              "DependsOn": [
+                "GmailTriggerLogGroup"
+              ]
+            },
+            "OcrNodeLambdaFunction": {
+              "Type": "AWS::Lambda::Function",
+              "Properties": {
+                "Code": {
+                  "S3Bucket": "serverless-framework-deployments-eu-west-1-4c9e3b88-5606",
+                  "S3Key": "serverless/automation-workflow/dev/1733912118981-2024-12-11T10:15:18.981Z/automation-workflow.zip"
+                },
+                "Handler": "src/ocr-node.handler",
+                "Runtime": "nodejs18.x",
+                "FunctionName": "automation-workflow-dev-ocrNode",
+                "MemorySize": 1024,
+                "Timeout": 6,
+                "Role": {
+                  "Fn::GetAtt": [
+                    "IamRoleLambdaExecution",
+                    "Arn"
+                  ]
+                }
+              },
+              "DependsOn": [
+                "OcrNodeLogGroup"
+              ]
+            },
+            "OpenaiNodeLambdaFunction": {
+              "Type": "AWS::Lambda::Function",
+              "Properties": {
+                "Code": {
+                  "S3Bucket": "serverless-framework-deployments-eu-west-1-4c9e3b88-5606",
+                  "S3Key": "serverless/automation-workflow/dev/1733912118981-2024-12-11T10:15:18.981Z/automation-workflow.zip"
+                },
+                "Handler": "src/openai-node.handler",
+                "Runtime": "nodejs18.x",
+                "FunctionName": "automation-workflow-dev-openaiNode",
+                "MemorySize": 1024,
+                "Timeout": 6,
+                "Role": {
+                  "Fn::GetAtt": [
+                    "IamRoleLambdaExecution",
+                    "Arn"
+                  ]
+                }
+              },
+              "DependsOn": [
+                "OpenaiNodeLogGroup"
+              ]
+            },
+            "QueueManagerLambdaVersionzrFjjZ1OSUadYRvV2y90XLboe7JR4rb4yxtwis3C48A": {
+              "Type": "AWS::Lambda::Version",
+              "DeletionPolicy": "Retain",
+              "Properties": {
+                "FunctionName": {
+                  "Ref": "QueueManagerLambdaFunction"
+                },
+                "CodeSha256": "JvMzAC5j9l7u6L4itiUUrowoZ6cyxLFb5znoUAqrT98="
+              }
+            },
+            "GmailTriggerLambdaVersionS7a73STmaVdSN7e1IaIdE474TXEV1d5imgyKk0ehU": {
+              "Type": "AWS::Lambda::Version",
+              "DeletionPolicy": "Retain",
+              "Properties": {
+                "FunctionName": {
+                  "Ref": "GmailTriggerLambdaFunction"
+                },
+                "CodeSha256": "JvMzAC5j9l7u6L4itiUUrowoZ6cyxLFb5znoUAqrT98="
+              }
+            },
+            "OcrNodeLambdaVersionHVx05olk2jv8iHLXQwM8ApQVv99FKouPQwQLejvqQ": {
+              "Type": "AWS::Lambda::Version",
+              "DeletionPolicy": "Retain",
+              "Properties": {
+                "FunctionName": {
+                  "Ref": "OcrNodeLambdaFunction"
+                },
+                "CodeSha256": "JvMzAC5j9l7u6L4itiUUrowoZ6cyxLFb5znoUAqrT98="
+              }
+            },
+            "OpenaiNodeLambdaVersion9EUbuz6LzYVPPC0kmzO4AUONcikCGWhlal6SYLgg": {
+              "Type": "AWS::Lambda::Version",
+              "DeletionPolicy": "Retain",
+              "Properties": {
+                "FunctionName": {
+                  "Ref": "OpenaiNodeLambdaFunction"
+                },
+                "CodeSha256": "JvMzAC5j9l7u6L4itiUUrowoZ6cyxLFb5znoUAqrT98="
+              }
+            },
+            "ApiGatewayRestApi": {
+              "Type": "AWS::ApiGateway::RestApi",
+              "Properties": {
+                "Name": "dev-automation-workflow",
+                "EndpointConfiguration": {
+                  "Types": [
+                    "EDGE"
+                  ]
+                },
+                "Policy": ""
+              }
+            },
+            "ApiGatewayResourceWorkflows": {
+              "Type": "AWS::ApiGateway::Resource",
+              "Properties": {
+                "ParentId": {
+                  "Fn::GetAtt": [
+                    "ApiGatewayRestApi",
+                    "RootResourceId"
+                  ]
+                },
+                "PathPart": "workflows",
+                "RestApiId": {
+                  "Ref": "ApiGatewayRestApi"
+                }
+              }
+            },
+            "ApiGatewayResourceWorkflowsTrigger": {
+              "Type": "AWS::ApiGateway::Resource",
+              "Properties": {
+                "ParentId": {
+                  "Ref": "ApiGatewayResourceWorkflows"
+                },
+                "PathPart": "trigger",
+                "RestApiId": {
+                  "Ref": "ApiGatewayRestApi"
+                }
+              }
+            },
+            "ApiGatewayMethodWorkflowsTriggerPost": {
+              "Type": "AWS::ApiGateway::Method",
+              "Properties": {
+                "HttpMethod": "POST",
+                "RequestParameters": {},
+                "ResourceId": {
+                  "Ref": "ApiGatewayResourceWorkflowsTrigger"
+                },
+                "RestApiId": {
+                  "Ref": "ApiGatewayRestApi"
+                },
+                "ApiKeyRequired": "<REDACTED>",
+                "AuthorizationType": "NONE",
+                "Integration": {
+                  "IntegrationHttpMethod": "POST",
+                  "Type": "AWS_PROXY",
+                  "Uri": {
+                    "Fn::Join": [
+                      "",
+                      [
+                        "arn:",
+                        {
+                          "Ref": "AWS::Partition"
+                        },
+                        ":apigateway:",
+                        {
+                          "Ref": "AWS::Region"
+                        },
+                        ":lambda:path/2015-03-31/functions/",
+                        {
+                          "Fn::GetAtt": [
+                            "GmailTriggerLambdaFunction",
+                            "Arn"
+                          ]
+                        },
+                        "/invocations"
+                      ]
+                    ]
+                  }
+                },
+                "MethodResponses": []
+              },
+              "DependsOn": [
+                "GmailTriggerLambdaPermissionApiGateway"
+              ]
+            },
+            "ApiGatewayDeployment1733912101226": {
+              "Type": "AWS::ApiGateway::Deployment",
+              "Properties": {
+                "RestApiId": {
+                  "Ref": "ApiGatewayRestApi"
+                },
+                "StageName": "dev"
+              },
+              "DependsOn": [
+                "ApiGatewayMethodWorkflowsTriggerPost"
+              ]
+            },
+            "GmailTriggerLambdaPermissionApiGateway": {
+              "Type": "AWS::Lambda::Permission",
+              "Properties": {
+                "FunctionName": {
+                  "Fn::GetAtt": [
+                    "GmailTriggerLambdaFunction",
+                    "Arn"
+                  ]
+                },
+                "Action": "lambda:InvokeFunction",
+                "Principal": "apigateway.amazonaws.com",
+                "SourceArn": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "arn:",
+                      {
+                        "Ref": "AWS::Partition"
+                      },
+                      ":execute-api:",
+                      {
+                        "Ref": "AWS::Region"
+                      },
+                      ":",
+                      {
+                        "Ref": "AWS::AccountId"
+                      },
+                      ":",
+                      {
+                        "Ref": "ApiGatewayRestApi"
+                      },
+                      "/*/*"
+                    ]
+                  ]
+                }
+              }
+            },
+            "QueueManagerEventSourceMappingSQSQueueManagerQueue": {
+              "Type": "AWS::Lambda::EventSourceMapping",
+              "DependsOn": [
+                "IamRoleLambdaExecution"
+              ],
+              "Properties": {
+                "BatchSize": 10,
+                "EventSourceArn": {
+                  "Fn::GetAtt": [
+                    "QueueManagerQueue",
+                    "Arn"
+                  ]
+                },
+                "FunctionName": {
+                  "Fn::GetAtt": [
+                    "QueueManagerLambdaFunction",
+                    "Arn"
+                  ]
+                },
+                "Enabled": true
+              }
+            },
+            "OcrNodeEventSourceMappingSQSOCRQueue": {
+              "Type": "AWS::Lambda::EventSourceMapping",
+              "DependsOn": [
+                "IamRoleLambdaExecution"
+              ],
+              "Properties": {
+                "BatchSize": 10,
+                "EventSourceArn": {
+                  "Fn::GetAtt": [
+                    "OCRQueue",
+                    "Arn"
+                  ]
+                },
+                "FunctionName": {
+                  "Fn::GetAtt": [
+                    "OcrNodeLambdaFunction",
+                    "Arn"
+                  ]
+                },
+                "Enabled": true
+              }
+            },
+            "OpenaiNodeEventSourceMappingSQSOpenAIQueue": {
+              "Type": "AWS::Lambda::EventSourceMapping",
+              "DependsOn": [
+                "IamRoleLambdaExecution"
+              ],
+              "Properties": {
+                "BatchSize": 10,
+                "EventSourceArn": {
+                  "Fn::GetAtt": [
+                    "OpenAIQueue",
+                    "Arn"
+                  ]
+                },
+                "FunctionName": {
+                  "Fn::GetAtt": [
+                    "OpenaiNodeLambdaFunction",
+                    "Arn"
+                  ]
+                },
+                "Enabled": true
+              }
+            },
+            "QueueManagerQueue": {
+              "Type": "AWS::SQS::Queue"
+            },
+            "OCRQueue": {
+              "Type": "AWS::SQS::Queue"
+            },
+            "OpenAIQueue": {
+              "Type": "AWS::SQS::Queue"
+            }
+          },
+          "Outputs": {
+            "ServerlessDeploymentBucketName": {
+              "Value": "serverless-framework-deployments-eu-west-1-4c9e3b88-5606",
+              "Export": {
+                "Name": "sls-automation-workflow-dev-ServerlessDeploymentBucketName"
+              }
+            },
+            "QueueManagerLambdaFunctionQualifiedArn": {
+              "Description": "Current Lambda function version",
+              "Value": {
+                "Ref": "QueueManagerLambdaVersionzrFjjZ1OSUadYRvV2y90XLboe7JR4rb4yxtwis3C48A"
+              },
+              "Export": {
+                "Name": "sls-automation-workflow-dev-QueueManagerLambdaFunctionQualifiedArn"
+              }
+            },
+            "GmailTriggerLambdaFunctionQualifiedArn": {
+              "Description": "Current Lambda function version",
+              "Value": {
+                "Ref": "GmailTriggerLambdaVersionS7a73STmaVdSN7e1IaIdE474TXEV1d5imgyKk0ehU"
+              },
+              "Export": {
+                "Name": "sls-automation-workflow-dev-GmailTriggerLambdaFunctionQualifiedArn"
+              }
+            },
+            "OcrNodeLambdaFunctionQualifiedArn": {
+              "Description": "Current Lambda function version",
+              "Value": {
+                "Ref": "OcrNodeLambdaVersionHVx05olk2jv8iHLXQwM8ApQVv99FKouPQwQLejvqQ"
+              },
+              "Export": {
+                "Name": "sls-automation-workflow-dev-OcrNodeLambdaFunctionQualifiedArn"
+              }
+            },
+            "OpenaiNodeLambdaFunctionQualifiedArn": {
+              "Description": "Current Lambda function version",
+              "Value": {
+                "Ref": "OpenaiNodeLambdaVersion9EUbuz6LzYVPPC0kmzO4AUONcikCGWhlal6SYLgg"
+              },
+              "Export": {
+                "Name": "sls-automation-workflow-dev-OpenaiNodeLambdaFunctionQualifiedArn"
+              }
+            },
+            "ServiceEndpoint": {
+              "Description": "URL of the service endpoint",
+              "Value": {
+                "Fn::Join": [
+                  "",
+                  [
+                    "https://",
+                    {
+                      "Ref": "ApiGatewayRestApi"
+                    },
+                    ".execute-api.",
+                    {
+                      "Ref": "AWS::Region"
+                    },
+                    ".",
+                    {
+                      "Ref": "AWS::URLSuffix"
+                    },
+                    "/dev"
+                  ]
+                ]
+              },
+              "Export": {
+                "Name": "sls-automation-workflow-dev-ServiceEndpoint"
+              }
+            }
+          }
+        },
+        "vpc": {}
+      },
+      "functions": {
+        "queueManager": {
+          "handler": "src/queue-manager.handler",
+          "events": [
+            {
+              "sqs": {
+                "arn": {
+                  "Fn::GetAtt": [
+                    "QueueManagerQueue",
+                    "Arn"
+                  ]
+                }
+              }
+            }
+          ],
+          "name": "automation-workflow-dev-queueManager",
+          "package": {},
+          "memory": 1024,
+          "timeout": 6,
+          "runtime": "nodejs18.x",
+          "vpc": {},
+          "versionLogicalId": "QueueManagerLambdaVersionzrFjjZ1OSUadYRvV2y90XLboe7JR4rb4yxtwis3C48A"
+        },
+        "gmailTrigger": {
+          "handler": "src/gmail-trigger.handler",
+          "events": [
+            {
+              "http": {
+                "path": "workflows/trigger",
+                "method": "post",
+                "integration": "AWS_PROXY"
+              }
+            }
+          ],
+          "name": "automation-workflow-dev-gmailTrigger",
+          "package": {},
+          "memory": 1024,
+          "timeout": 6,
+          "runtime": "nodejs18.x",
+          "vpc": {},
+          "versionLogicalId": "GmailTriggerLambdaVersionS7a73STmaVdSN7e1IaIdE474TXEV1d5imgyKk0ehU"
+        },
+        "ocrNode": {
+          "handler": "src/ocr-node.handler",
+          "events": [
+            {
+              "sqs": {
+                "arn": {
+                  "Fn::GetAtt": [
+                    "OCRQueue",
+                    "Arn"
+                  ]
+                }
+              }
+            }
+          ],
+          "name": "automation-workflow-dev-ocrNode",
+          "package": {},
+          "memory": 1024,
+          "timeout": 6,
+          "runtime": "nodejs18.x",
+          "vpc": {},
+          "versionLogicalId": "OcrNodeLambdaVersionHVx05olk2jv8iHLXQwM8ApQVv99FKouPQwQLejvqQ"
+        },
+        "openaiNode": {
+          "handler": "src/openai-node.handler",
+          "events": [
+            {
+              "sqs": {
+                "arn": {
+                  "Fn::GetAtt": [
+                    "OpenAIQueue",
+                    "Arn"
+                  ]
+                }
+              }
+            }
+          ],
+          "name": "automation-workflow-dev-openaiNode",
+          "package": {},
+          "memory": 1024,
+          "timeout": 6,
+          "runtime": "nodejs18.x",
+          "vpc": {},
+          "versionLogicalId": "OpenaiNodeLambdaVersion9EUbuz6LzYVPPC0kmzO4AUONcikCGWhlal6SYLgg"
+        }
+      },
+      "resources": {
+        "Resources": {
+          "QueueManagerQueue": {
+            "Type": "AWS::SQS::Queue"
+          },
+          "OCRQueue": {
+            "Type": "AWS::SQS::Queue"
+          },
+          "OpenAIQueue": {
+            "Type": "AWS::SQS::Queue"
+          }
+        },
+        "Outputs": {}
+      }
+    },
+    "serviceRawFile": "service: automation-workflow\r\n\r\nprovider:\r\n  name: aws\r\n  runtime: nodejs18.x\r\n  region: eu-west-1\r\n  iam:\r\n    role:\r\n      statements:\r\n        - Effect: \"Allow\"\r\n          Action:\r\n            - \"sqs:SendMessage\"\r\n          Resource:\r\n            - arn:aws:sqs:eu-west-1:034362054340:automation-workflow-dev-QueueManagerQueue-*\r\n            - arn:aws:sqs:eu-west-1:034362054340:automation-workflow-dev-OCRQueue-*\r\n            - arn:aws:sqs:eu-west-1:034362054340:automation-workflow-dev-OpenAIQueue-*\r\n\r\nfunctions:\r\n  queueManager:\r\n    handler: src/queue-manager.handler\r\n    events:\r\n      - sqs:\r\n          arn:\r\n            Fn::GetAtt:\r\n              - QueueManagerQueue\r\n              - Arn\r\n\r\n  gmailTrigger:\r\n    handler: src/gmail-trigger.handler\r\n    events:\r\n      - http:\r\n          path: workflows/trigger\r\n          method: post\r\n\r\n  ocrNode:\r\n    handler: src/ocr-node.handler\r\n    events:\r\n      - sqs:\r\n          arn:\r\n            Fn::GetAtt:\r\n              - OCRQueue\r\n              - Arn\r\n\r\n  openaiNode:\r\n    handler: src/openai-node.handler\r\n    events:\r\n      - sqs:\r\n          arn:\r\n            Fn::GetAtt:\r\n              - OpenAIQueue\r\n              - Arn\r\n\r\nresources:\r\n  Resources:\r\n    QueueManagerQueue:\r\n      Type: AWS::SQS::Queue\r\n\r\n    OCRQueue:\r\n      Type: AWS::SQS::Queue\r\n\r\n    OpenAIQueue:\r\n      Type: AWS::SQS::Queue\r\n",
+    "command": [
+      "deploy"
+    ],
+    "options": {},
+    "error": null,
+    "params": {},
+    "machineId": "2693cf8086568d3b798a523b38f65b34",
+    "stage": "dev",
+    "accessKeyV2": "<REDACTED>",
+    "accessKeyV1": "<REDACTED>",
+    "orgId": "a2d91ef8-7ecd-4e68-a0b2-4ff4993c006b",
+    "orgName": "coedge",
+    "userId": "RbjLNXKXghRC6Hj3D4",
+    "dashboard": {
+      "isEnabledForService": false,
+      "requiredAuthentication": false,
+      "orgFeaturesInUse": null,
+      "orgObservabilityIntegrations": null,
+      "serviceAppId": null,
+      "serviceProvider": null,
+      "instanceParameters": null
+    },
+    "userName": "coedge",
+    "subscription": null,
+    "userEmail": "emerald.dev@hotmail.com",
+    "serviceProviderAwsRegion": "eu-west-1",
+    "serviceProviderAwsCredentials": "<REDACTED>",
+    "serviceProviderAwsAccountId": "034362054340",
+    "projectType": "traditional",
+    "versionSf": "4.4.15",
+    "serviceProviderAwsCfStackName": "automation-workflow-dev",
+    "integrations": {},
+    "serviceUniqueId": "arn:aws:cloudformation:eu-west-1:034362054340:stack/automation-workflow-dev/3910c2d0-b793-11ef-b78e-0a27c8f43d13",
+    "serviceProviderAwsCfStackId": "arn:aws:cloudformation:eu-west-1:034362054340:stack/automation-workflow-dev/3910c2d0-b793-11ef-b78e-0a27c8f43d13",
+    "serviceProviderAwsCfStackCreated": "2024-12-11T07:40:41.825Z",
+    "serviceProviderAwsCfStackUpdated": "2024-12-11T10:15:49.014Z",
+    "serviceProviderAwsCfStackStatus": "UPDATE_COMPLETE",
+    "serviceProviderAwsCfStackOutputs": [
+      {
+        "OutputKey": "QueueManagerLambdaFunctionQualifiedArn",
+        "OutputValue": "arn:aws:lambda:eu-west-1:034362054340:function:automation-workflow-dev-queueManager:5",
+        "Description": "Current Lambda function version",
+        "ExportName": "sls-automation-workflow-dev-QueueManagerLambdaFunctionQualifiedArn"
+      },
+      {
+        "OutputKey": "OpenaiNodeLambdaFunctionQualifiedArn",
+        "OutputValue": "arn:aws:lambda:eu-west-1:034362054340:function:automation-workflow-dev-openaiNode:5",
+        "Description": "Current Lambda function version",
+        "ExportName": "sls-automation-workflow-dev-OpenaiNodeLambdaFunctionQualifiedArn"
+      },
+      {
+        "OutputKey": "GmailTriggerLambdaFunctionQualifiedArn",
+        "OutputValue": "arn:aws:lambda:eu-west-1:034362054340:function:automation-workflow-dev-gmailTrigger:5",
+        "Description": "Current Lambda function version",
+        "ExportName": "sls-automation-workflow-dev-GmailTriggerLambdaFunctionQualifiedArn"
+      },
+      {
+        "OutputKey": "OcrNodeLambdaFunctionQualifiedArn",
+        "OutputValue": "arn:aws:lambda:eu-west-1:034362054340:function:automation-workflow-dev-ocrNode:5",
+        "Description": "Current Lambda function version",
+        "ExportName": "sls-automation-workflow-dev-OcrNodeLambdaFunctionQualifiedArn"
+      },
+      {
+        "OutputKey": "ServiceEndpoint",
+        "OutputValue": "https://6nqpfnhuhb.execute-api.eu-west-1.amazonaws.com/dev",
+        "Description": "URL of the service endpoint",
+        "ExportName": "sls-automation-workflow-dev-ServiceEndpoint"
+      },
+      {
+        "OutputKey": "ServerlessDeploymentBucketName",
+        "OutputValue": "serverless-framework-deployments-eu-west-1-4c9e3b88-5606",
+        "ExportName": "sls-automation-workflow-dev-ServerlessDeploymentBucketName"
+      }
+    ]
+  }
+}

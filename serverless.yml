@@ -1,0 +1,62 @@
+service: automation-workflow
+
+provider:
+  name: aws
+  runtime: nodejs18.x
+  region: eu-west-1
+  iam:
+    role:
+      statements:
+        - Effect: "Allow"
+          Action:
+            - "sqs:SendMessage"
+          Resource:
+            - arn:aws:sqs:eu-west-1:034362054340:automation-workflow-dev-QueueManagerQueue-*
+            - arn:aws:sqs:eu-west-1:034362054340:automation-workflow-dev-OCRQueue-*
+            - arn:aws:sqs:eu-west-1:034362054340:automation-workflow-dev-OpenAIQueue-*
+
+functions:
+  queueManager:
+    handler: src/queue-manager.handler
+    events:
+      - sqs:
+          arn:
+            Fn::GetAtt:
+              - QueueManagerQueue
+              - Arn
+
+  gmailTrigger:
+    handler: src/gmail-trigger.handler
+    events:
+      - http:
+          path: workflows/trigger
+          method: post
+
+  ocrNode:
+    handler: src/ocr-node.handler
+    events:
+      - sqs:
+          arn:
+            Fn::GetAtt:
+              - OCRQueue
+              - Arn
+
+  openaiNode:
+    handler: src/openai-node.handler
+    events:
+      - sqs:
+          arn:
+            Fn::GetAtt:
+              - OpenAIQueue
+              - Arn
+
+resources:
+  Resources:
+    QueueManagerQueue:
+      Type: AWS::SQS::Queue
+
+    OCRQueue:
+      Type: AWS::SQS::Queue
+
+    OpenAIQueue:
+      Type: AWS::SQS::Queue
